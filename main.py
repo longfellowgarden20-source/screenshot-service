@@ -27,14 +27,16 @@ class ScreenshotRequest(BaseModel):
 
 async def upload_to_supabase(preview_id: str, image_bytes: bytes) -> str:
     path = f"{preview_id}.png"
+    # Use PUT (upsert) so re-captures overwrite the existing file instead of 409ing
     upload_url = f"{SUPABASE_URL}/storage/v1/object/{STORAGE_BUCKET}/{path}"
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
+        resp = await client.put(
             upload_url,
             headers={
                 "apikey": SUPABASE_KEY,
                 "Authorization": f"Bearer {SUPABASE_KEY}",
                 "Content-Type": "image/png",
+                "x-upsert": "true",
             },
             content=image_bytes,
             timeout=30,
